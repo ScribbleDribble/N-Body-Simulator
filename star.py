@@ -3,10 +3,9 @@ from particle import Particle
 
 class Star(Particle):
 
-    def __init__(self, mass, x, y, z, name, universe):
-        super().__init__(mass, x, y, z)
+    def __init__(self, mass, initial_x, initial_y, intial_z, initial_vx, initial_vy, name):
+        super().__init__(mass, initial_x, initial_y, intial_z, initial_vx, initial_vy)
         self.name = name
-        self.universe = universe
 
     def get_mass(self):
         return self.mass
