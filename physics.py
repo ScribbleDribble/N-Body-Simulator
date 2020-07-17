@@ -16,6 +16,15 @@ class Physics:
     def force_components(f, theta):
         return np.array([f * math.cos(theta), f * math.cos(90 - theta), f * math.sin(theta)])
 
+    @staticmethod
+    def velocity(inital_v, delta_t, a):
+        return inital_v + delta_t * a
+
+    @staticmethod
+    def displacement(velocity, time):
+        return velocity * time
+
+
     # @staticmethod
     # def acceleration():
 
