@@ -2,7 +2,7 @@ import numpy as np
 import numpy.linalg as la
 import math
 from physics import Physics
-
+from analytics import Analytics
 
 class SolarSystem:
 
@@ -11,9 +11,13 @@ class SolarSystem:
         self._name = name
         self._body_list = []
         self._f_matrix = np.zeros(shape=(3, n_bodies))
-        self._a_matrix = np.zeros(shape=(3, n_bodies))
+        self.a_matrix = np.zeros(shape=(3, n_bodies))
         self.dt = time_step
         self._n_bodies = n_bodies
+        self._analytics = Analytics()
+        self._acceleration_analytics = Analytics()
+        self._velocity_analytics = Analytics()
+        self._t = 0
 
     def add_body(self, body):
         if len(self._body_list) > self._n_bodies:
@@ -21,7 +25,6 @@ class SolarSystem:
             return
 
         self._body_list.append(body)
-
 
     def net_forces(self):
         """ produces a matrix of force components for all bodies """
@@ -41,19 +44,27 @@ class SolarSystem:
 
             count += 1
 
+        self._analytics.add_data(self._t, la.norm(self._f_matrix[:, 1]))
+
     def acceleration(self):
         """ updates acceleration matrix - ax, ay, az for each body """
-        self._a_matrix.fill(0)
+        self.a_matrix.fill(0)
 
         for i, body in enumerate(self._body_list):
-            self._a_matrix[:, i] = self._f_matrix[:, i] / body.get_mass()
+            self.a_matrix[:, i] = self._f_matrix[:, i] / body.get_mass()
+
+        self._acceleration_analytics.add_data(self._t, la.norm(self.a_matrix[:, 1]))
 
     def velocity(self):
         """ updates velocity """
         for i, body in enumerate(self._body_list):
-            v = Physics.velocity(body.get_velocity(), self.dt, self._a_matrix[:, i])
-            body.set_position(v[0], v[1], v[2], self.dt)
+            v = Physics.velocity(body.get_velocity(), self.dt, self.a_matrix[:, i])
+            body.set_position(v, self.dt)
 
+            if i == 1:
+                self._velocity_analytics.add_data(self._t, la.norm(v))
+
+        self._t += self.dt
         self.render()
 
     @staticmethod
@@ -66,12 +77,12 @@ class SolarSystem:
         """ calculates Euclidean distance between two particles """
         return la.norm(pos1 - pos2)
 
-    @staticmethod
-    def get_angle(delta_x, distance):
-        """ returns angle between two particles """
-        return math.acos(delta_x / distance)
-
     def render(self):
         """ draws new position of all particles """
         for body in self._body_list:
             body.draw_update()
+
+    def plot(self):
+        self._acceleration_analytics.draw("Acceleration of a planet by time", "Acceleration (ms^-2)")
+        self._analytics.draw("Force exerted on a planet by time", "Force (N)")
+        self._velocity_analytics.draw("Velocity of a planet by time", "Velocity (ms^-1)")
